@@ -35,7 +35,6 @@ using namespace chrono;
 
 /** Function Headers */
 void detectAndDisplay(Mat frame);
-void TestImgDir(const char *imgdir);
 
 /** Global variables */
 String haar_car_cascade_name = "haarcascade_car.xml";
@@ -55,21 +54,27 @@ int testingImgDir=0;
 int HAAR;
 
 void detectAndDisplay(Mat mat);
-void TestImgDir(DIR *dir);
+int TestImgDir(const char *dirname);
 
-/** function TestImgDir */
-void TestImgDir(DIR *dir)
+/* return 1 if it is really a directory name, otherwise return 0 */
+int TestImgDir(const char *dirname)
 {   
+    DIR *dir = opendir(dirname);
     struct dirent *ent;
     string image_filename;
+
+   if (dir == NULL)
+       return 0;
+   else
    {
+        testingImgDir=1;
         /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
             if (strstr(ent->d_name,".jpg")!=NULL) {
                 image_filename=ent->d_name;
                 printf ("filename: %s\n", image_filename.c_str());
                 char imagefile[80];
-                sprintf(imagefile,"%s/%s",imgdir,image_filename.c_str());
+                sprintf(imagefile,"%s/%s",dirname,image_filename.c_str());
                 Mat img = imread(imagefile, 1);
                 if( img.empty()) {
                     cout << "Couldn't load " <<imagefile << endl;
@@ -79,17 +84,19 @@ void TestImgDir(DIR *dir)
                 }
             }
         }
+	
+	free(ent);
+	closedir(dir);
+        return 1;
     }
-    free(ent);
 }
 
 
 int main( int argc, const char * argv[] )
 {   VideoCapture capture;
     Mat frame;
-	Dir *dir;
 
-	if (agrc == 1)
+	if (argc == 1)
 	{
 		printf("usage: %s -HAAR/-LBP [directory or file name]\n", argv[0]);
 		return 0;
@@ -150,16 +157,10 @@ int main( int argc, const char * argv[] )
            } while (waitKey(30)<0); // while no key pressed
         }
     }
-	else if (dir = opendir (argv[2]))  // try opening it as a directory
-	{
-        testingImgDir=1;
-		TestImgDir(dir);
-	    closedir(dir);
-	}
-    else
+    else if (!TestImgDir(argv[2]))  // try opening it as a directory, but fail
     {  
-       frame = imread(argv[1], CV_LOAD_IMAGE_COLOR); // try opening it as an image file
-       if (!frame.data)  //not an image file
+       frame = imread(argv[2], CV_LOAD_IMAGE_COLOR); // try opening it as an image file
+       if (frame.empty())  //not an image file
        {
 	   		capture.open(argv[1]); // try opening it as a video file
            if (capture.isOpened())
@@ -215,13 +216,13 @@ void detectAndDisplay( Mat frame )
   equalizeHist( frame_gray, frame_gray );
 
   //-- Detect cars
-  car_cascade.detectMultiScale( frame_gray, cars, 1.1, 2, 0|CASCADE_SCALE_IMAGE, Size(30, 30) );
+  car_cascade.detectMultiScale( frame_gray, cars, 1.1, 10, 0|CASCADE_SCALE_IMAGE, Size(30, 30) );
   
 
   for( size_t i = 0; i < cars.size(); i++ )
   {
     Point center( cars[i].x + cars[i].width*0.5, cars[i].y + cars[i].height*0.5 );
-    ellipse( frame, center, Size( cars[i].width*0.5, cars[i].height*0.5), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
+    ellipse( frame, center, Size( cars[i].width*0.5, cars[i].height*0.5), 0, 0, 360, Scalar( 0, 255, 0 ), 4, 8, 0 );
 
     Mat carROI = frame_gray( cars[i] );
     std::vector<Rect> faces;
