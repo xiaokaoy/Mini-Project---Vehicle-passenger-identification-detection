@@ -15,9 +15,7 @@
 //   $(PROG):$(SRCS)
 //      $(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
 //Usage:
-//for image:         ./main imagefile  [-LBP] (default -HAAR)
-//for video file:    ./main videofile  [-LBP] (default -HAAR)
-//for video camera:  ./main [-LBP] (default -HAAR)
+// miniproj -HAAR/-LBP [directory or file name]
 
 #include "opencv2/objdetect/objdetect.hpp"
 #include "opencv2/highgui/highgui.hpp"
